@@ -1,11 +1,12 @@
 # Etapa 1: Construcción usando OpenJDK 23
 FROM openjdk:23-slim AS build
 LABEL authors="Miller Alvarez"
+
 # Establecer el directorio de trabajo en el contenedor
 WORKDIR /app
 
 # Copiar el archivo de permisos para Gradle y la carpeta gradle/wrapper al contenedor
-COPY gradlew ./
+COPY gradlew ./gradlew
 COPY gradle ./gradle
 
 # Dar permisos de ejecución a gradlew
@@ -13,6 +14,9 @@ RUN chmod +x ./gradlew
 
 # Copiar el resto de los archivos del proyecto
 COPY . .
+
+# Cambiar los permisos de todos los archivos copiados para asegurarse de que el usuario tenga acceso
+RUN chmod -R 755 .
 
 # Ejecutar la construcción de la aplicación
 RUN ./gradlew clean build --no-daemon
