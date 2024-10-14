@@ -1,10 +1,4 @@
-# Etapa 1: Construcción usando Oracle Linux con instalación de JDK 23
-FROM oraclelinux:8-slim AS build
-
-# Instalar microdnf, ya que dnf no está disponible en la imagen slim
-RUN microdnf install -y oracle-release-el8 && \
-    microdnf install -y oracle-java-23 && \
-    microdnf clean all
+FROM openjdk:23-slim AS build
 
 # Establecer directorio de trabajo en el contenedor
 WORKDIR /app
@@ -15,13 +9,8 @@ COPY . .
 # Ejecutar la construcción de la aplicación
 RUN ./gradlew clean build --no-daemon
 
-# Etapa 2: Ejecutar la aplicación con Oracle JDK 23
-FROM oraclelinux:8-slim
-
-# Instalar microdnf para manejar la instalación de Java en esta etapa también
-RUN microdnf install -y oracle-release-el8 && \
-    microdnf install -y oracle-java-23 && \
-    microdnf clean all
+# Etapa 2: Ejecutar la aplicación con OpenJDK 23
+FROM openjdk:23-slim
 
 # Establecer el directorio de trabajo
 WORKDIR /app
