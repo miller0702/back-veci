@@ -56,48 +56,26 @@ public class RecargaController {
         return ResponseEntity.ok(transacciones);
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(TransaccionController.class);
-
     @GetMapping("/transaccion/{id}/ticket")
-    public ResponseEntity<byte[]> getTicket(@PathVariable String id) {
-        try {
-            logger.info("Iniciando generación del ticket para transacción con id: {}", id);
+    public ResponseEntity<byte[]> getTicket(@PathVariable String id) throws MalformedURLException {
+        Transaccion transaccion = puntoredService.getTicketById(id);
+        Proveedor proveedor = puntoredService.getProveedorById(transaccion.getSupplierId());
 
-            // Obtención de la transacción y proveedor
-            Transaccion transaccion = puntoredService.getTicketById(id);
-            if (transaccion == null) {
-                logger.error("Transacción no encontrada para el id: {}", id);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PdfWriter writer = new PdfWriter(baos);
 
-            Proveedor proveedor = puntoredService.getProveedorById(transaccion.getSupplierId());
-            if (proveedor == null) {
-                logger.error("Proveedor no encontrado para el supplierId: {}", transaccion.getSupplierId());
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
+        float width = 80;
+        float height = 200;
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf, new PageSize(width, height));
 
-            logger.info("Transacción y proveedor encontrados. Iniciando creación de PDF...");
+        document.setMargins(5, 5, 5, 5);
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PdfWriter writer = new PdfWriter(baos);
-            PdfDocument pdf = new PdfDocument(writer);
-            Document document = new Document(pdf, new PageSize(80, 200));
-
-            document.setMargins(5, 5, 5, 5);
-
-            String logoPath = "src/main/resources/assets/logo.png";
-            Image logo;
-            try {
-                logo = new Image(ImageDataFactory.create(logoPath));
-                logo.scaleToFit(40, 40);
-                logo.setHorizontalAlignment(HorizontalAlignment.CENTER);
-                document.add(logo);
-            } catch (MalformedURLException e) {
-                logger.error("Error al cargar el logo desde la ruta: {}", logoPath, e);
-                document.add(new Paragraph("LOGO NO DISPONIBLE")
-                        .setFontSize(4)
-                        .setTextAlignment(TextAlignment.CENTER));
-            }
+        String logoPath = "src/main/resources/assets/logo.png";
+        Image logo = new Image(ImageDataFactory.create(logoPath));
+        logo.scaleToFit(40, 40);
+        logo.setHorizontalAlignment(HorizontalAlignment.CENTER);
+        document.add(logo);
 
         Paragraph title = new Paragraph("TICKET DE TRANSACCIÓN")
                 .setBold()
@@ -178,20 +156,13 @@ public class RecargaController {
         }
 
         document.close();
-        byte[] pdfBytes = baos.toByteArray();
 
+        byte[] pdfBytes = baos.toByteArray();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDisposition(ContentDisposition.attachment().filename("ticket_" + id + ".pdf").build());
 
-        logger.info("Ticket PDF generado correctamente para la transacción con id: {}", id);
-
         return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
-
-    } catch (Exception e) {
-        logger.error("Error al generar el ticket para la transacción con id: {}", id, e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-    }
     }
 
     private String formatPhoneNumber(String cellPhone) {
