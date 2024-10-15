@@ -6,6 +6,7 @@ import com.itextpdf.kernel.pdf.canvas.draw.SolidLine;
 import com.itextpdf.layout.element.LineSeparator;
 import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.*;
 import veci.veciback.model.Proveedor;
 import veci.veciback.model.Transaccion;
@@ -14,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -57,7 +60,7 @@ public class RecargaController {
     }
 
     @GetMapping("/transaccion/{id}/ticket")
-    public ResponseEntity<byte[]> getTicket(@PathVariable String id) throws MalformedURLException {
+    public ResponseEntity<byte[]> getTicket(@PathVariable String id) throws IOException {
         Transaccion transaccion = puntoredService.getTicketById(id);
         Proveedor proveedor = puntoredService.getProveedorById(transaccion.getSupplierId());
 
@@ -71,8 +74,12 @@ public class RecargaController {
 
         document.setMargins(5, 5, 5, 5);
 
-        String logoPath = "src/main/resources/assets/logo.png";
-        Image logo = new Image(ImageDataFactory.create(logoPath));
+        ClassPathResource logoResource = new ClassPathResource("assets/logo.png");
+
+        InputStream logoInputStream = logoResource.getInputStream();
+        byte[] logoBytes = logoInputStream.readAllBytes();
+        Image logo = new Image(ImageDataFactory.create(logoBytes));
+
         logo.scaleToFit(40, 40);
         logo.setHorizontalAlignment(HorizontalAlignment.CENTER);
         document.add(logo);
@@ -90,7 +97,7 @@ public class RecargaController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
         String formattedDateTime = now.format(formatter);
 
-        Paragraph dateTimeParagraph = new Paragraph( formattedDateTime)
+        Paragraph dateTimeParagraph = new Paragraph(formattedDateTime)
                 .setFontSize(2)
                 .setTextAlignment(TextAlignment.CENTER);
         dateTimeParagraph.setMarginTop(1);
