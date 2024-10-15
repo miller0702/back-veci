@@ -51,7 +51,7 @@ public class PuntoredService {
         }
     }
 
-    private List<Proveedor> proveedoresCache = new ArrayList<>(); // Cache para los proveedores
+    private List<Proveedor> proveedoresCache = new ArrayList<>();
 
     public List<Proveedor> getSuppliers() {
         validateToken();
@@ -66,7 +66,7 @@ public class PuntoredService {
 
             ObjectMapper objectMapper = new ObjectMapper();
             proveedoresCache = objectMapper.readValue(responseString, new TypeReference<List<Proveedor>>() {});
-            return proveedoresCache; // Devuelve la lista de proveedores
+            return proveedoresCache;
         } catch (Exception e) {
             throw new RuntimeException("Error al obtener proveedores: " + e.getMessage());
         }
